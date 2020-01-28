@@ -2,11 +2,11 @@
 
 const char *ssid = "HG531V1-J2SFVE";
 const char *password = "01234567";
-// Set web server port number to 80
+// Set web server port number
 WiFiServer server(80); //EthernetServer server(80);
 // Variable to store the HTTP request
 String header;
-
+String lamp26status="off";
 void ConnectToWiFi()
 {
   WiFi.begin(ssid, password);
@@ -45,7 +45,7 @@ void ClientsListner()
             // and a content-type so the client knows what's coming, then a blank line:
             // Serial.println(header);
             client.println("HTTP/1.1 200 OK");
-            client.println("Content-type:text/html");
+            client.println("Content-type:application/json");
             client.println("Connection: close");
             client.println();
             // turns the GPIOs on and off
@@ -53,14 +53,20 @@ void ClientsListner()
             {
               Serial.println("26 torned on");
               digitalWrite(26, HIGH);
+              lamp26status="on";
+              client.print(lamp26status);
             }
             else if (header.indexOf("GET /26/off") >= 0)
             {
               Serial.println(" 26 torned  off");
               digitalWrite(26, LOW);
-            }
-            // Web Page Heading
-            client.print("<body><h1>Server ready to use</h1>");
+              lamp26status="off";
+              client.print(lamp26status);
+            } 
+            else if (header.indexOf("GET /status") >= 0)
+            {
+              client.print("{\"26\":\""+lamp26status+"\"}");
+            } 
             // The HTTP response ends with another blank line
             client.println();
             // Break out of the while loop
