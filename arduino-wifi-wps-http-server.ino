@@ -16,6 +16,8 @@ Pranav Cherukupalli <cherukupallip@gmail.com>
 
 String header;
 String lamp26status = "off";
+// String lamp34status = "on";
+bool connectedToWifi = false;
 WiFiServer server(89);
 /*
 Change the definition of the WPS mode
@@ -29,6 +31,9 @@ WPS
 #define ESP_MODEL_NAME "ESPRESSIF IOT"
 #define ESP_DEVICE_NAME "ESP STATION"
 
+#define LED_WHAITING 25
+#define RELAYPIN 23
+
 static esp_wps_config_t config;
 
 void wpsInitConfig()
@@ -41,7 +46,7 @@ void wpsInitConfig()
   strcpy(config.factory_info.device_name, ESP_DEVICE_NAME);
 }
 
-/* String wpspin2string(uint8_t a[])
+ String wpspin2string(uint8_t a[])
 {
   char wps_pin[9];
   for (int i = 0; i < 8; i++)
@@ -50,10 +55,11 @@ void wpsInitConfig()
   }
   wps_pin[8] = '\0';
   return (String)wps_pin;
-} */
+} 
 
 void WiFiEvent(WiFiEvent_t event, system_event_info_t info)
 {
+  connectedToWifi=false;
   switch (event)
   {
   case SYSTEM_EVENT_STA_START:
@@ -64,6 +70,7 @@ void WiFiEvent(WiFiEvent_t event, system_event_info_t info)
     Serial.print("Got IP: ");
     Serial.println(WiFi.localIP());
     server.begin();
+    connectedToWifi=true;
 
     break;
   case SYSTEM_EVENT_STA_DISCONNECTED:
@@ -88,9 +95,9 @@ void WiFiEvent(WiFiEvent_t event, system_event_info_t info)
     esp_wifi_wps_enable(&config);
     esp_wifi_wps_start(0);
     break;
-  /* case SYSTEM_EVENT_STA_WPS_ER_PIN:
+   case SYSTEM_EVENT_STA_WPS_ER_PIN:
     Serial.println("WPS_PIN = " + wpspin2string(info.sta_er_pin.pin_code));
-    break; */
+    break; 
   default:
     break;
   }
@@ -103,8 +110,11 @@ void setup()
   Serial.println();
   // Initialize the output variables as outputs
   pinMode(26, OUTPUT);
+  pinMode(LED_WHAITING, OUTPUT);
+  pinMode(RELAYPIN, OUTPUT); 
   // Set outputs to LOW
   digitalWrite(26, LOW);
+  digitalWrite(RELAYPIN, LOW);
 
   WiFi.onEvent(WiFiEvent);
   WiFi.mode(WIFI_MODE_STA);
@@ -116,9 +126,18 @@ void setup()
 
 void loop()
 {
+   if(!connectedToWifi){
+      loading();
+    }
   ClientsListner();
   
 }
+void loading(){
+   digitalWrite(LED_WHAITING, HIGH);
+   delay(500); 
+   digitalWrite(LED_WHAITING, LOW);
+   delay(500); 
+  }
 void ClientsListner()
 {
   WiFiClient client = server.available(); //or EthernetClient  Listen for incoming clients
@@ -152,6 +171,7 @@ void ClientsListner()
             {
               Serial.println("26 torned on");
               digitalWrite(26, HIGH);
+               digitalWrite(RELAYPIN, HIGH);
               lamp26status = "on";
               client.print("{\"status\":\"" + lamp26status + "\"}");
             }
@@ -159,6 +179,7 @@ void ClientsListner()
             {
               Serial.println(" 26 torned  off");
               digitalWrite(26, LOW);
+               digitalWrite(RELAYPIN, LOW);
               lamp26status = "off";
               client.print("{\"status\":\"" + lamp26status + "\"}");
             }
