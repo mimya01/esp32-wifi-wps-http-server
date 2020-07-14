@@ -1,21 +1,7 @@
-/*
-Example Code To Get ESP32 To Connect To A Router Using WPS
-===========================================================
-This example code provides both Push Button method and Pin
-based WPS entry to get your ESP connected to your WiFi router.
-Hardware Requirements
-========================
-ESP32 and a Router having atleast one WPS functionality
-This code is under Public Domain License.
-Author:
-Pranav Cherukupalli <cherukupallip@gmail.com>
-*/
-
 #include "WiFi.h"
 #include "esp_wps.h"
 
 String header;
-String lamp26status = "off";
 // String lamp34status = "on";
 bool connectedToWifi = false;
 WiFiServer server(89);
@@ -32,7 +18,7 @@ WPS
 #define ESP_DEVICE_NAME "ESP STATION"
 
 #define LED_WHAITING 25
-#define RELAYPIN 23
+#define RELAYPIN_1 23
 
 static esp_wps_config_t config;
 
@@ -69,6 +55,8 @@ void WiFiEvent(WiFiEvent_t event, system_event_info_t info)
     Serial.println("Connected to :" + String(WiFi.SSID()));
     Serial.print("Got IP: ");
     Serial.println(WiFi.localIP());
+     Serial.print("Got IP: ");
+    Serial.println(WiFi.macAddress());
     server.begin();
     connectedToWifi=true;
 
@@ -109,12 +97,9 @@ void setup()
   delay(10);
   Serial.println();
   // Initialize the output variables as outputs
-  pinMode(26, OUTPUT);
   pinMode(LED_WHAITING, OUTPUT);
-  pinMode(RELAYPIN, OUTPUT); 
-  // Set outputs to LOW
-  digitalWrite(26, LOW);
-  digitalWrite(RELAYPIN, LOW);
+  pinMode(RELAYPIN_1, OUTPUT); 
+  digitalWrite(RELAYPIN_1, HIGH);
 
   WiFi.onEvent(WiFiEvent);
   WiFi.mode(WIFI_MODE_STA);
@@ -167,26 +152,25 @@ void ClientsListner()
             client.println("Connection: close");
             client.println();
             // turns the GPIOs on and off
-            if (header.indexOf("GET /26/on") >= 0)
+            if (header.indexOf("GET /23/on") >= 0)
             {
-              Serial.println("26 torned on");
-              digitalWrite(26, HIGH);
-               digitalWrite(RELAYPIN, HIGH);
-              lamp26status = "on";
-              client.print("{\"status\":\"" + lamp26status + "\"}");
+              digitalWrite(RELAYPIN_1, LOW);
+              client.print("{\"status\":\"on\"}");
             }
-            else if (header.indexOf("GET /26/off") >= 0)
+            else if (header.indexOf("GET /23/off") >= 0)
             {
-              Serial.println(" 26 torned  off");
-              digitalWrite(26, LOW);
-               digitalWrite(RELAYPIN, LOW);
-              lamp26status = "off";
-              client.print("{\"status\":\"" + lamp26status + "\"}");
+               digitalWrite(RELAYPIN_1, HIGH);
+              client.print("{\"status\":\"off\"}");
             }
-            else if (header.indexOf("GET /status") >= 0)
+           /*  else if (header.indexOf("GET /status") >= 0)
             {
+              String status = "{";
+              if(digitalRead(RELAYPIN_1) == LOW){
+                 status+="\"26\":\"
+              }
+              status = "}";
               client.print("{\"26\":\"" + lamp26status + "\"}");
-            }
+            } */
             // The HTTP response ends with another blank line
             client.println();
             // Break out of the while loop
