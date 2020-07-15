@@ -2,8 +2,6 @@
 #include "esp_wps.h"
 
 String header;
-// String lamp34status = "on";
-bool connectedToWifi = false;
 WiFiServer server(89);
 /*
 Change the definition of the WPS mode
@@ -45,7 +43,6 @@ void wpsInitConfig()
 
 void WiFiEvent(WiFiEvent_t event, system_event_info_t info)
 {
-  connectedToWifi=false;
   switch (event)
   {
   case SYSTEM_EVENT_STA_START:
@@ -58,7 +55,6 @@ void WiFiEvent(WiFiEvent_t event, system_event_info_t info)
      Serial.print("Got IP: ");
     Serial.println(WiFi.macAddress());
     server.begin();
-    connectedToWifi=true;
 
     break;
   case SYSTEM_EVENT_STA_DISCONNECTED:
@@ -111,9 +107,9 @@ void setup()
 
 void loop()
 {
-   if(!connectedToWifi){
+   while (WiFi.status() != WL_CONNECTED){
       loading();
-    }
+   }
   ClientsListner();
   
 }
